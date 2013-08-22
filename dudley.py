@@ -14,7 +14,8 @@ class Device(object):
 
     def getinfo(self):
         self.attr = {}
-        info = subprocess.check_output(["udisks", "--show-info", self.path])
+        info = subprocess.check_output(["udisks", "--show-info", self.path],
+                                       universal_newlines=True)
         for line in filter(lambda s: s[2:4] != "  ", info.split("\n")):
             fld = line[:31].strip()
             if fld in self.fields:
@@ -47,7 +48,8 @@ class Device(object):
 
 def get_devices():
     dlist = []
-    enumf = subprocess.check_output(["udisks", "--enumerate-device-files"])
+    enumf = subprocess.check_output(["udisks", "--enumerate-device-files"],
+                                    universal_newlines=True)
     for name in filter(lambda s: s.count("/") == 2, enumf.split("\n")):
         dev = Device(name)
         if dev.isdrive():
@@ -56,7 +58,7 @@ def get_devices():
 
 def print_devices(devices):
     for dev in devices:
-        print dev
+        print(dev)
     return
 
 def main():
@@ -83,10 +85,10 @@ def main():
                 if dev == sys.argv[2]:
                     ret = dev.unmount()
                     if ret == 0:
-                        print "{0} unmounted".format(dev.attr["label:"])
+                        print("{0} unmounted".format(dev.attr["label:"]))
 
     else:
-        print "dudley <list|mount|unmount> [devid]"
+        print("dudley <list|mount|unmount> [devid]")
 
 if __name__ == "__main__":
     main()
