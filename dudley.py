@@ -1,29 +1,25 @@
+
 import sys
-import os
 import subprocess
-import StringIO
 
 def get_devices():
-    stdout = subprocess.check_output(["udisks", "--enumerate-device-files"])
-    lns = stdout.split("\n")
-
-    devices = {}
-    k = None
-    for line in lns:
-        if line.count("/") == 2:
-            k = line
-            devices[k] = []
-        elif k is not None:
-            devices[k].append(line)
-    return devices
+    dd = {}
+    devices = subprocess.check_output(["udisks", "--enumerate-device-files"])
+    for name in filter(lambda s: s.count("/") == 2, devices.split("\n")):
+        info = subprocess.check_output(["udisks", "--show-info", name])
+        if "filesystem" in info:
+            dd[name] = filter(lambda s: s[2:4] != "  ", info.split("\n"))
+    return dd
 
 def print_devices(devices):
     for k in devices:
-        if True in ("by-uuid" in a for a in devices[k]):
-            print(k)
-            for s in devices[k]:
-                if "by-id" in s:
-                    print("\t" + s)
+        print k,
+        for s in devices[k]:
+            if "label" in s:
+                print s[8:].strip(),
+            if "type" in s:
+                print s[7:].strip(),
+        print
     return
 
 def mount_device(name):
@@ -42,8 +38,7 @@ def main():
     if len(sys.argv) > 1:
         cmd = sys.argv[1]
     else:
-        devices = get_devices()
-        print_devices(devices)
+        print_devices(get_devices())
         sys.exit(0)
 
     if cmd == "list":
@@ -51,15 +46,13 @@ def main():
 
     elif cmd == "mount":
         if len(sys.argv) > 2:
-            devname = sys.argv[2]
-            mount_device(devname)
+            mount_device(sys.argv[2])
         else:
             raise UserError("Must provide a device name in order to mount")
 
     elif cmd == "unmount":
         if len(sys.argv) > 2:
-            devname = sys.argv[2]
-            unmount_device(devname)
+            unmount_device(sys.argv[2])
         else:
             raise UserError("Must provide a device name in order to mount")
 
