@@ -5,7 +5,7 @@ import subprocess
 
 class Device(object):
 
-    fields = ["label:", "type:", "usage:"]
+    fields = ["label:", "type:", "usage:", "is mounted:"]
 
     def __init__(self, path):
         self.path = path
@@ -27,9 +27,12 @@ class Device(object):
         return False
 
     def __repr__(self):
-        s = "{0:12s}{1:16s}{2:6s}{3}".format(self.path, self.attr["label:"],
-                                             self.attr["type:"],
-                                             self.attr["usage:"])
+        mnt = "*" if int(self.attr["is mounted:"]) else "_"
+        s = "{0:12s}{1:16s}{2:6s}{3:10s}{4:>3s}".format(self.path,
+                                            self.attr["label:"],
+                                            self.attr["type:"],
+                                            self.attr["usage:"],
+                                            mnt)
         return s
 
     def isdrive(self):
