@@ -2,59 +2,87 @@
 import sys
 import subprocess
 
+class Device(object):
+
+    fields = ["label:", "type:", "usage:"]
+
+    def __init__(self, path):
+        self.path = path
+        self.getinfo()
+        return
+
+    def getinfo(self):
+        self.attr = {}
+        info = subprocess.check_output(["udisks", "--show-info", self.path])
+        for line in filter(lambda s: s[2:4] != "  ", info.split("\n")):
+            fld = line[:31].strip()
+            if fld in self.fields:
+                self.attr[fld] = line[31:].strip()
+
+    def __eq__(self, other):
+        for k in self.attr:
+            if other in (self.path, self.attr["label:"]):
+                return True
+        return False
+
+    def __repr__(self):
+        s = "{0:12s}{1:16s}{2:6s}{3}".format(self.path, self.attr["label:"],
+                                             self.attr["type:"],
+                                             self.attr["usage:"])
+        return s
+
+    def isdrive(self):
+        return self.attr.get("usage:", "") == "filesystem"
+
+    def mount(self):
+        return subprocess.call(["udisks", "--mount", self.path])
+
+    def unmount(self):
+        return subprocess.call(["udisks", "--unmount", self.path])
+
+
 def get_devices():
-    dd = {}
-    devices = subprocess.check_output(["udisks", "--enumerate-device-files"])
-    for name in filter(lambda s: s.count("/") == 2, devices.split("\n")):
-        info = subprocess.check_output(["udisks", "--show-info", name])
-        if "filesystem" in info:
-            dd[name] = filter(lambda s: s[2:4] != "  ", info.split("\n"))
-    return dd
+    dlist = []
+    enumf = subprocess.check_output(["udisks", "--enumerate-device-files"])
+    for name in filter(lambda s: s.count("/") == 2, enumf.split("\n")):
+        dev = Device(name)
+        if dev.isdrive():
+            dlist.append(dev)
+    return dlist
 
 def print_devices(devices):
-    for k in devices:
-        print k,
-        for s in devices[k]:
-            if "label" in s:
-                print s[8:].strip(),
-            if "type" in s:
-                print s[7:].strip(),
-        print
+    for dev in devices:
+        print dev
     return
 
-def mount_device(name):
-    if name in get_devices():
-        subprocess.call(["udisks", "--mount", name])
-    else:
-        raise UserError("Device name {0} nonexistent".format(name))
-
-def unmount_device(name):
-    if name in get_devices():
-        subprocess.call(["udisks", "--unmount", name])
-    else:
-        raise UserError("Device name {0} nonexistent".format(name))
-
 def main():
-    if len(sys.argv) > 1:
-        cmd = sys.argv[1]
-    else:
-        print_devices(get_devices())
+
+    devices = get_devices()
+
+    if len(sys.argv) == 1 or sys.argv[1] == "list":
+        print_devices(devices)
         sys.exit(0)
+    else:
+        cmd = sys.argv[1]
 
-    if cmd == "list":
-        print_devices(get_devices())
-
-    elif cmd == "mount":
-        if len(sys.argv) > 2:
-            mount_device(sys.argv[2])
-        else:
+    if cmd in ("mount", "unmount"):
+        if len(sys.argv) <= 2:
             raise UserError("Must provide a device name in order to mount")
+        elif sys.argv[2] not in devices:
+            raise UserError("Device \"{0}\" not found".format(sys.argv[2]))
+        elif cmd == "mount":
+            for dev in devices:
+                if dev == sys.argv[2]:
+                    ret = dev.mount()
+        elif cmd == "unmount":
+            for dev in devices:
+                if dev == sys.argv[2]:
+                    ret = dev.unmount()
+                    if ret == 0:
+                        print "{0} unmounted".format(dev.attr["label:"])
 
-    elif cmd == "unmount":
-        if len(sys.argv) > 2:
-            unmount_device(sys.argv[2])
-        else:
-            raise UserError("Must provide a device name in order to mount")
+    else:
+        print "dudley <list|mount|unmount> [devid]"
 
 if __name__ == "__main__":
     main()
