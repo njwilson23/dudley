@@ -1,6 +1,6 @@
 # Dudley USB mounter
 
-Dudley is a simple wrapper around udisks that mounts USB filesystems.
+**dudley** is a trivial wrapper around _udisks_ that mounts USB filesystems.
 
 
 ## Usage
