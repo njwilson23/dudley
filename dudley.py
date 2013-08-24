@@ -12,21 +12,6 @@ class Device(object):
         self.getinfo()
         return
 
-    def getinfo(self):
-        self.attr = {}
-        info = subprocess.check_output(["udisks", "--show-info", self.path],
-                                       universal_newlines=True)
-        for line in filter(lambda s: s[2:4] != "  ", info.split("\n")):
-            fld = line[:31].strip()
-            if fld in self.fields:
-                self.attr[fld] = line[31:].strip()
-
-    def __eq__(self, other):
-        for k in self.attr:
-            if other in (self.path, self.attr["label:"]):
-                return True
-        return False
-
     def __repr__(self):
         mnt = "*" if int(self.attr["is mounted:"]) else "_"
         s = "{0:12s}{1:16s}{2:6s}{3:10s}{4:>3s}".format(self.path,
@@ -35,6 +20,21 @@ class Device(object):
                                             self.attr["usage:"],
                                             mnt)
         return s
+
+    def __eq__(self, other):
+        for k in self.attr:
+            if other in (self.path, self.attr["label:"]):
+                return True
+        return False
+
+    def getinfo(self):
+        self.attr = {}
+        info = subprocess.check_output(["udisks", "--show-info", self.path],
+                                       universal_newlines=True)
+        for line in filter(lambda s: s[2:4] != "  ", info.split("\n")):
+            fld = line[:31].strip()
+            if fld in self.fields:
+                self.attr[fld] = line[31:].strip()
 
     def isdrive(self):
         return self.attr.get("usage:", "") == "filesystem"
@@ -88,7 +88,7 @@ def main():
                         print("{0} unmounted".format(dev.attr["label:"]))
 
     else:
-        print("dudley <list|mount|unmount> [devid]")
+        print("dudley <list|mount|unmount> [device-id]")
 
 if __name__ == "__main__":
     main()
