@@ -84,7 +84,7 @@ def main():
             for dev in devices:
                 if dev == sys.argv[2]:
                     ret = dev.unmount()
-                    if ret == 0:
+                    if dev not in get_devices():
                         print("{0} unmounted".format(dev.attr["label:"]))
 
     else:
