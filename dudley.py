@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import sys
+import os
 import subprocess
 
 class Device(object):
@@ -61,6 +62,33 @@ def print_devices(devices):
         print(dev)
     return
 
+def sanitize_name(name):
+    """ Return a string based on *name* suitable for use as an environment
+    variable. """
+
+    illegal_chars = (" ", "!", "@", "#", "$", "%", "^", "&", "*", "(", ")",
+            "{", "}", "[", "]", "|", "\\", "/", ":", ";", "\"", "'", ",", ".",
+            "<", ">", "?")
+    sname = name.upper().replace("-", "_")
+    sname = filter(lambda c: c not in illegal_chars, sname)
+    return sname
+
+def set_envvar(name, val):
+    if name in os.environ:
+        print("ENVVAR {0} in use")
+    else:
+        #os.environ[name] = str(val)
+        print "setting",name,"=",val
+    return
+
+def unset_envvar(name):
+    if name in os.environ:
+        #del os.environ[name]
+        print "deleting", os.environ[name]
+    else:
+        print("ENVVAR {0} was not set".format(name))
+    return
+
 def main():
 
     devices = get_devices()
@@ -80,10 +108,12 @@ def main():
             for dev in devices:
                 if dev == sys.argv[2]:
                     ret = dev.mount()
+                    set_envvar(sanitize_name(dev.attr["label:"]), dev.path)
         elif cmd == "unmount":
             for dev in devices:
                 if dev == sys.argv[2]:
                     ret = dev.unmount()
+                    unset_envvar(sanitize_name(dev.attr["label:"]))
                     if dev not in get_devices():
                         print("{0} unmounted".format(dev.attr["label:"]))
 
