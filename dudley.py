@@ -46,6 +46,12 @@ class Device(object):
         return subprocess.call(["udisks", "--unmount", self.path])
 
 
+class UserError(Exception):
+    def __init__(self, msg):
+        print msg
+        sys.exit(1)
+
+
 def get_devices():
     dlist = []
     enumf = subprocess.check_output(["udisks", "--enumerate-device-files"],
@@ -92,7 +98,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-class UserError(Exception):
-    pass
 
