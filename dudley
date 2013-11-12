@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import sys
+import argparse
 import subprocess
 
 class Device(object):
@@ -69,32 +70,34 @@ def print_devices(devices):
 
 def main():
 
+    parser = argparse.ArgumentParser(description="Mount and unmount filesystems")
+    parser.add_argument("action", help="action to undertake",
+                        choices=("mount", "unmount", "list"), nargs="?")
+    parser.add_argument("fs", help="identifier for the filesystem to operate on",
+                        nargs="?")
+    args = parser.parse_args()
+
     devices = get_devices()
 
-    if len(sys.argv) == 1 or sys.argv[1] == "list":
+    if args.action is None or args.action == "list":
         print_devices(devices)
         sys.exit(0)
-    else:
-        cmd = sys.argv[1]
 
-    if cmd in ("mount", "unmount"):
-        if len(sys.argv) <= 2:
+    if args.action in ("mount", "unmount"):
+        if args.fs is None:
             raise UserError("Must provide a device name in order to mount")
-        elif sys.argv[2] not in devices:
-            raise UserError("Device \"{0}\" not found".format(sys.argv[2]))
-        elif cmd == "mount":
+        elif args.fs not in devices:
+            raise UserError("Device \"{0}\" not found".format(args.fs))
+        elif args.action == "mount":
             for dev in devices:
-                if dev == sys.argv[2]:
+                if dev == args.fs:
                     ret = dev.mount()
-        elif cmd == "unmount":
+        elif args.action == "unmount":
             for dev in devices:
-                if dev == sys.argv[2]:
+                if dev == args.fs:
                     ret = dev.unmount()
                     if dev not in get_devices():
                         print("{0} unmounted".format(dev.attr["label:"]))
-
-    else:
-        print("dudley <list|mount|unmount> [device-id]")
 
 if __name__ == "__main__":
     main()
