@@ -1,6 +1,6 @@
 # Simple USB filesystem mount utility
 
-**dudley** is a trivial wrapper around _udisks_ that mounts USB filesystems.
+**dudley** is a 100-line wrapper around _udisks_ that mounts USB filesystems.
 
 
 ## Usage
@@ -13,8 +13,8 @@ Mount or unmount a filesystem with
 
     dudley [un]mount <device-id>
 
-where the `device-id` is either the device path or device label given above.
+where the `device-id` is either the device path or device label given by `list`.
 
 In the background, these actions simply subprocess and parse the output from the
-relevent _udisks_ command.
+appropriate _udisks_ command.
 
